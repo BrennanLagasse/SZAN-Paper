@@ -1,0 +1,10 @@
+gymnasium[atari]
+ale-py
+numpy
+opencv-python
+psutil
+torch
+torchvision
+tqdm
+matplotlib
+tensorboard
