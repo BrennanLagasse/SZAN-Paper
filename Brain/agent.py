@@ -135,9 +135,9 @@ class SACAgent:
 
 
             # Calculating the value target
-            logits = self.policy_network(states)  # [batch_size, n_actions]
-            action_probs = F.softmax(logits, dim=-1)  # [batch_size, n_actions]
-            log_probs = F.log_softmax(logits, dim=-1)  # [batch_size, n_actions]
+            logits = self.policy_network(states)   
+            action_probs = F.softmax(logits, dim=-1)   
+            log_probs = F.log_softmax(logits, dim=-1)   
         
 
             print("action probs shape: ", action_probs.shape)

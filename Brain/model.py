@@ -71,7 +71,6 @@ class QvalueNetwork(nn.Module, ABC):
         self.hidden2 = nn.Linear(in_features=self.n_hidden_filters, out_features=self.n_hidden_filters)
         init_weight(self.hidden2)
         self.hidden2.bias.data.zero_()
-        # Output Q-values for all actions (discrete case)
         self.q_value = nn.Linear(in_features=self.n_hidden_filters, out_features=self.n_actions)
         #self.q_value = nn.Linear(in_features=self.n_hidden_filters, out_features=1)
         init_weight(self.q_value, initializer="xavier uniform")
@@ -126,9 +125,7 @@ class PolicyNetwork(nn.Module, ABC):
         action_dist = Categorical(action_probs)
         action = action_dist.sample()
         log_prob = action_dist.log_prob(action)
-         
-        #action_item = action_index.item()
-        #action_item = torch.argmax(probs).item()
+  
          
         return logits, log_prob, action_probs #(action * self.action_bounds[1]) #.clamp_(self.action_bounds[0], self.action_bounds[1]), log_prob
         

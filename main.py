@@ -83,7 +83,7 @@ if __name__ == "__main__":
         logger.on()
         for episode in tqdm(range(1 + min_episode, params["max_n_episodes"] + 1)):
             print("\n\n")
-            # Skill chosen
+         
             z = np.random.choice(params["n_skills"], p=p_z)
             print("Training skill (z): " , z)
             assert 0 <= z < params["n_skills"], f"Skill {z} out of bounds [0, {params['n_skills']})"
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                 if logq_zs is None:
                     if last_logq_zs is not None:
                         logq_zses.append(last_logq_zs)
-                    # Or handle the None case differently
+                    
                 else:
                     logq_zses.append(logq_zs)
                     last_logq_zs = logq_zs
@@ -142,10 +142,10 @@ if __name__ == "__main__":
                        z,
                        sum(logq_zses) / len(logq_zses),
                        step,
-                       get_random_state(np.random),  # Changed
-                        get_random_state(env.np_random),  # Changed
-                        get_random_state(env.observation_space.np_random),  # Changed
-                        get_random_state(env.action_space.np_random),  # Changed
+                       get_random_state(np.random),  
+                        get_random_state(env.np_random),   
+                        get_random_state(env.observation_space.np_random),   
+                        get_random_state(env.action_space.np_random),   
                        *agent.get_rng_states(),
                        )
         writer.flush()
