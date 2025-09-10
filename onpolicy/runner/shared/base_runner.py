@@ -22,8 +22,17 @@ class Runner(object):
         self.device = config['device']
         self.num_agents = config['num_agents']
         if config.__contains__("render_envs"):
-            self.render_envs = config['render_envs']       
+            self.render_envs = config['render_envs']  
 
+        # if not self.use_wandb:
+        #     from torch.utils.tensorboard import SummaryWriter
+        #     log_dir = str(self.log_dir)  # or wherever you want TB logs
+        #     self.writter = SummaryWriter(log_dir=log_dir)
+        #     print(f"DEBUG: Initialized TensorBoard SummaryWriter at {log_dir}")
+        # else:
+        #     self.writter = None  # Not needed when using wandb
+
+        
         # parameters
         self.env_name = self.all_args.env_name
         self.algorithm_name = self.all_args.algorithm_name
@@ -53,15 +62,19 @@ class Runner(object):
         self.model_dir = self.all_args.model_dir
 
         if self.use_render:
+            print("1")
             self.run_dir = config["run_dir"]
             self.gif_dir = str(self.run_dir / 'gifs')
             if not os.path.exists(self.gif_dir):
                 os.makedirs(self.gif_dir)
         else:
+            print("2")
             if self.use_wandb:
                 self.save_dir = str(wandb.run.dir)
                 self.run_dir = str(wandb.run.dir)
+                print("3")
             else:
+                print("4")
                 self.run_dir = config["run_dir"]
                 self.log_dir = str(self.run_dir / 'logs')
                 if not os.path.exists(self.log_dir):
@@ -145,6 +158,7 @@ class Runner(object):
     def save(self):
         """Save policy's actor and critic networks."""
         policy_actor = self.trainer.policy.actor
+        # print(f"Saving models to: {self.save_dir}")
         torch.save(policy_actor.state_dict(), str(self.save_dir) + "/actor.pt")
         policy_critic = self.trainer.policy.in_critic
         torch.save(policy_critic.state_dict(), str(self.save_dir) + "/in_critic.pt")
@@ -161,17 +175,41 @@ class Runner(object):
             policy_critic_state_dict = torch.load(str(self.model_dir) + '/ex_critic.pt')
             self.policy.ex_critic.load_state_dict(policy_critic_state_dict)
  
+    # def log_train(self, train_infos, total_num_steps):
+    #     """
+    #     Log training info.
+    #     :param train_infos: (dict) information about training update.
+    #     :param total_num_steps: (int) total number of training env steps.
+    #     """
+    #     for k, v in train_infos.items():
+    #         if self.use_wandb:
+    #             wandb.log({k: v}, step=total_num_steps)
+    #         else:
+    #             # self.writter.add_scalars(k, {k: v}, total_num_steps)
+    #             self.writter.add_scalar(k, v, total_num_steps)
+
     def log_train(self, train_infos, total_num_steps):
         """
         Log training info.
         :param train_infos: (dict) information about training update.
         :param total_num_steps: (int) total number of training env steps.
         """
-        for k, v in train_infos.items():
-            if self.use_wandb:
-                wandb.log({k: v}, step=total_num_steps)
-            else:
-                self.writter.add_scalars(k, {k: v}, total_num_steps)
+        return
+        # print(f"DEBUG: log_train called with {len(train_infos)} items, use_wandb={self.use_wandb}")
+        # print(f"DEBUG: train_infos keys: {list(train_infos.keys())}")
+        
+        # for k, v in train_infos.items():
+        #     # print(f"DEBUG: Logging {k} = {v}")
+        #     if self.use_wandb:
+        #         wandb.log({k: v}, step=total_num_steps)
+        #     else:
+        #         # print(f"DEBUG: Calling self.writter.add_scalar({k}, {v}, {total_num_steps})")
+        #         try:
+        #             self.writter.add_scalar(k, v, total_num_steps)
+        #             print(f"DEBUG: Successfully logged {k}")
+        #         except Exception as e:
+        #             print(f"DEBUG: Failed to log {k}: {e}")
+
 
     def log_env(self, env_infos, total_num_steps):
         """

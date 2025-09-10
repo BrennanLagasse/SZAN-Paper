@@ -19,15 +19,15 @@
 import numpy as np
 from .envs import make_env
 
-class PongEnv:  # CHANGE: Class name
+class PongEnv:  
     def __init__(self, args):
         env = make_env(args.game_name, seed=0, rank=0,
                       log_dir=None, allow_early_resets=True, add_monitor=True, frame_stack=4)()
-        # CHANGE: Remove ToMultiAgent call (already done in wrap_deepmind)
         self.env = env
         self.action_space = env.action_space
         self.observation_space = env.observation_space
         self.share_observation_space = env.observation_space
+
     
     def step(self, a):
         a = a[0]  # Extract single action from multi-agent format

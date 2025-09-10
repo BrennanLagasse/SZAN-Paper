@@ -88,8 +88,10 @@ def main(args):
     # wandb
     if all_args.use_wandb:
         run = wandb.init(config=all_args,
-                         project="VMAPD",
-                         entity=all_args.user_name,
+                        #  project="VMAPD",
+                         project="pong-training",
+                        #  entity=all_args.user_name,
+                         entity="ncataldo01278",
                          notes=socket.gethostname(),
                          name=str(all_args.algorithm_name) + "_" +
                          str(all_args.game_name) +
@@ -154,28 +156,7 @@ def main(args):
         runner.writter.close()
 
 
-# if __name__ == "__main__":
-#     import sys
-#     test_args = [
-#         '--env_name', 'pong',
-#         '--algorithm_name', 'ours',
-#         '--game_name', 'PongNoFrameskip-v4',
-#         '--experiment_name', 'test_pong',
-#         '--seed', '1',
-#         '--max_z', '2',
-#         '--num_env_steps', '100000',
-#         '--episode_length', '200',
-#         '--n_rollout_threads', '1',
-#         '--ppo_epoch', '10',
-#         '--num_mini_batch', '1',
-#         '--lr', '5e-4',
-#         '--critic_lr', '5e-4',
-#         '--use_eval',
-#         '--eval_interval', '5',
-#         '--log_interval', '1',
-#         '--save_interval', '10'
-#     ]
-#     main(test_args)
+
 
 
 
@@ -191,13 +172,14 @@ if __name__ == "__main__":
         '--rex_thresh', '0.8',
         '--alpha_rex', '1.0',
         '--alpha_div', '1.0',
-        '--n_rollout_threads', '16', #shoudl be 16
+        '--n_rollout_threads', '8', #shoudl be 16
         '--episode_length', '128',    #shoudl be 128
         '--ppo_epoch', '4',
         '--num_mini_batch', '4',
         '--num_env_steps', '50000000',  
-        '--experiment_name', 'Pong_Training_8_27',
-        '--seed', '42'
+        '--experiment_name', 'Pong_Training_8_29Test',
+        '--seed', '42',
+        '--use_wandb', 'False'
     ]
     main(test_args)
 
@@ -206,11 +188,3 @@ if __name__ == "__main__":
 
 
 
-
-
-
-
-
-
-
-    # main(sys.argv[1:])

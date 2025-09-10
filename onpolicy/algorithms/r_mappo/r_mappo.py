@@ -175,18 +175,72 @@ class R_MAPPO():
         Rex_mask = (cur_value > self.rex_thresh) # -50, -3
         Rex_mask = Rex_mask[z_idxs_batch]
 
+        # print(f"MASK ANALYSIS DEBUG:")
+        # print(f"  z_log_probs range: [{z_log_probs.min():.4f}, {z_log_probs.max():.4f}]")
+        # print(f"  math.log(div_thresh): {math.log(self.div_thresh):.4f}")
+        # print(f"  cur_value range: [{cur_value.min():.4f}, {cur_value.max():.4f}]")
+        # print(f"  rex_thresh: {self.rex_thresh:.4f}")
+
         if self.algo_name == "MAPPO":
             target = ex_L_clip
         else:
-            target = ex_L_clip * diver_mask 
-            target = target + in_L_clip * Rex_mask * (self.env_num>100) * self.alpha_rex_coeff
-            target = target + in_L_clip * ~diver_mask * self.alpha_div_coeff
-            # target = target - dist_entropy.unsqueeze(1) * ~diver_mask * self.sdpo_entropy_coeff 
+            #i think this is the origonal, can confimr with repository if need to 
+            # target = ex_L_clip * diver_mask 
+            # target = target + in_L_clip * Rex_mask * (self.env_num>100) * self.alpha_rex_coeff
+            # target = target + in_L_clip * ~diver_mask * self.alpha_div_coeff
+            # # target = target - dist_entropy.unsqueeze(1) * ~diver_mask * self.sdpo_entropy_coeff 
+            
+            #this is the newer addition of the target calculation 
+            # target = ex_L_clip + in_L_clip * self.alpha_div_coeff * 0.01  # Small diversity weight
+
+            # Temporarily disable diversity entirely (this is newested addition, th eoriognal is above)
+            if self.env_num < 500:  # First 500 updates = pure Pong learning
+                target = ex_L_clip
+            else:  # After 500 updates = gradual diversity introduction
+                target = ex_L_clip + in_L_clip * self.alpha_div_coeff * 0.005
+
+
+
 
         policy_loss = target - dist_entropy.mean() * self.entropy_coef
         policy_loss = (policy_loss * active_masks_batch).sum() / active_masks_batch.sum()
 
+
+        # Update your debug block to:
+        # if self.env_num % 10 == 0:
+        #     print(f"\n=== POLICY LOSS DEBUG (Update {self.env_num}) ===")
+        #     print(f"COMPONENT MAGNITUDES:")
+        #     print(f"  ex_L_clip mean: {ex_L_clip.mean():.6f}")
+        #     print(f"  in_L_clip mean: {in_L_clip.mean():.6f}")
+            
+        #     # Fix the diversity contribution calculation
+        #     if self.env_num < 500:
+        #         diversity_contribution = 0.0  # No diversity for first 500 updates
+        #     else:
+        #         diversity_contribution = (in_L_clip * self.alpha_div_coeff * 0.005).mean()
+            
+        #     print(f"  diversity contribution: {diversity_contribution:.6f}")
+        #     print(f"  entropy contribution: {(dist_entropy.mean() * self.entropy_coef):.6f}")
+            
+        #     print(f"FINAL VALUES:")
+        #     print(f"  target (before entropy): {target.mean():.6f}")
+        #     print(f"  policy_loss (final): {policy_loss:.6f}")
+            
+        #     print(f"RATIOS:")
+        #     if abs(ex_L_clip.mean()) > 1e-8 and self.env_num >= 500:
+        #         ratio = abs(diversity_contribution) / abs(ex_L_clip.mean())
+        #         print(f"  diversity/extrinsic ratio: {ratio:.2f}")
+        #     else:
+        #         print(f"  diversity/extrinsic ratio: 0.00")
+        #     print("=" * 50)
+
+
+
+
+
         self.policy.actor_optimizer.zero_grad()
+
+
 
         if update_actor:
             policy_loss.backward()
@@ -195,6 +249,27 @@ class R_MAPPO():
             actor_grad_norm = nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.max_grad_norm)
         else:
             actor_grad_norm = get_gard_norm(self.policy.actor.parameters())
+
+
+        if self.env_num % 50 == 0:  # Every 50 updates
+            print(f"\n=== PPO LEARNING DIAGNOSTICS (Update {self.env_num}) ===")
+            
+            # Check if gradients are flowing
+            total_norm = 0
+            param_count = 0
+            for p in self.policy.actor.parameters():
+                if p.grad is not None:
+                    param_norm = p.grad.data.norm(2)
+                    total_norm += param_norm.item() ** 2
+                    param_count += 1
+            total_norm = total_norm ** (1. / 2)
+            
+            print(f"GRADIENT HEALTH:")
+            print(f"  Actor grad norm: {total_norm:.6f}")
+            print(f"  Learning rate: {self.policy.actor_optimizer.param_groups[0]['lr']:.6f}")
+            print(f"  Policy loss magnitude: {abs(policy_loss.item()):.6f}")
+
+
 
         self.policy.actor_optimizer.step()
 
@@ -230,6 +305,16 @@ class R_MAPPO():
 
         self.policy.in_critic_optimizer.step()
 
+
+        if self.env_num % 50 == 0:
+            print(f"VALUE FUNCTION DIAGNOSTICS:")
+            print(f"  Ex value loss: {ex_value_loss.item():.6f}")
+            print(f"  Ex values range: [{ex_values.min():.3f}, {ex_values.max():.3f}]")
+            print(f"  Ex returns range: [{ex_return_batch.min():.3f}, {ex_return_batch.max():.3f}]")
+            print(f"  Ex advantages range: [{ex_adv_targ.min():.3f}, {ex_adv_targ.max():.3f}]")
+            print("=" * 50)
+
+
         # discriminator update
         z_log_probs, _ = self.policy.evaluate_z(
             share_obs_batch, rnn_states_z_batch, masks_batch, active_masks=active_masks_batch, isTrain=True
@@ -259,6 +344,13 @@ class R_MAPPO():
         for z in range(self.max_z):
             train_info['cur_value_{}'.format(z)] = cur_value[z].mean()
 
+        # print(f"TRAINING DEBUG:")
+        # print(f"  diver_mask True%: {(diver_mask*1.).mean():.2f}")
+        # print(f"  Rex_mask True%: {(Rex_mask*1.).mean():.2f}")
+        # print(f"  alpha_rex_coeff: {self.alpha_rex_coeff}")
+        # print(f"  alpha_div_coeff: {self.alpha_div_coeff}")
+        # print(f"  env_num: {self.env_num}")
+
         return train_info
 
     def train(self, buffer, update_actor=True):
@@ -269,6 +361,7 @@ class R_MAPPO():
 
         :return train_info: (dict) contains information regarding training update (e.g. loss, grad norms, etc).
         """
+
         
         if self._use_popart or self._use_valuenorm:
             

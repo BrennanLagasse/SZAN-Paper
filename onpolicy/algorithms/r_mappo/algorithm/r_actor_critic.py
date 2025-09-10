@@ -109,6 +109,12 @@ class R_Discriminator(nn.Module):
             
             action_log_probs = []
 
+            # if obs.shape[0] <= 8:  # Only debug for normal batch sizes
+            #     print(f"DEBUG Discriminator isTrain=False:")
+            #     print(f"  obs shape: {obs.shape}")
+            #     print(f"  action values: {action_np.squeeze(1)}")
+        
+
             for z in range(1, self.max_z):
 
                 idx1 = action_np.squeeze(1)
@@ -126,8 +132,17 @@ class R_Discriminator(nn.Module):
 
                 action_log_probs.append(action_log_prob)
 
+                # if obs.shape[0] <= 8:
+                #     print(f"  z={z}: log_prob min={action_log_prob.min().item():.3f}, max={action_log_prob.max().item():.3f}")
+
+
+
+
             action_log_probs = torch.stack(action_log_probs)
             action_log_probs = torch.min(action_log_probs, 0)[0]
+
+            # if obs.shape[0] <= 8:
+            #     print(f"  Final min result: {action_log_probs.flatten()[:8]}")
 
         return action_log_probs, rnn_states
 

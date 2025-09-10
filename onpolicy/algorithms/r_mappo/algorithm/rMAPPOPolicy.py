@@ -173,10 +173,22 @@ class R_MAPPOPolicy:
         cent_obs = cent_obs[:,self.max_z:]
 
         available_mask = None
+
+        # print(f"DEBUG - Authors' Implementation:")
+        # print(f"  Current z strategies: {z_idx[:4]}")
+    
+
+
         # if isTrain is False:
         #     available_mask = np.tril(np.ones(self.max_z))[z_idxs.squeeze(1)]
-        #     cent_obs = cent_obs + np.random.randn(*cent_obs.shape) / 10.
-        
+        #     cent_obs = cent_obs + np.random.randn(*cent_obs.shape) /       10.
+
+        # print(f"DEBUG evaluate_z: z_idx values: {z_idx}")
+        # print(f"DEBUG evaluate_z: cent_obs shape after z removal: {cent_obs.shape}")
+
+        # print(f"Buffer shape: {self.buffer.share_obs[step+1].shape}")
+        # print(f"After concat shape: {np.concatenate(self.buffer.share_obs[step+1]).shape}")
+
         action_log_probs, rnn_states_z = \
             self.discriminator.evaluate_actions(
                 cent_obs, 
@@ -186,6 +198,10 @@ class R_MAPPOPolicy:
                 active_masks=active_masks,
                 isTrain=isTrain
             )
+        
+        # print(f"  Raw discriminator outputs: {action_log_probs.flatten()[:4]}")
+        # print(f"  Are these actually intrinsic rewards or intermediate values?")
+
 
         return action_log_probs, rnn_states_z
 

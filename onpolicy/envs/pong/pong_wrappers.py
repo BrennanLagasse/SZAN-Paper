@@ -902,8 +902,12 @@ class ToMultiAgent(gym.Wrapper):
 #     env = MaxAndSkipEnv(env, skip=4)
 #     return env
 
-def make_atari(env_id):
-    env = gym.make(env_id)
+def make_atari(env_id, difficulty=None):
+    # env = gym.make(env_id)
+    if difficulty is not None:
+        env = gym.make(env_id, difficulty=difficulty)
+    else:
+        env = gym.make(env_id)
     env.reset()  # Reset first
     
     assert 'NoFrameskip' in env.spec.id

@@ -127,7 +127,7 @@ class VMAPDWrapper(object):
         except AttributeError:
             # Some wrappers in the chain don't have seed() - that's okay
             # The important thing is that we tried to seed
-            print(f"Warning: Could not seed environment, but continuing...")
+            # print(f"Warning: Could not seed environment, but continuing...")
             return [seed]
  
         
